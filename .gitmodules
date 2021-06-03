@@ -1,0 +1,3 @@
+[submodule "automatron"]
+	path = automatron
+	url = https://github.com/splash-damage/automatron.git
