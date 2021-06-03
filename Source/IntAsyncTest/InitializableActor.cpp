@@ -27,18 +27,23 @@ void AInitializableActor::Initialize_Implementation()
 //TODO Implement
 	Status = EInitializableState::Initialized;
 //TODO EXAMPLE
-	SD::WhenAll<int32>({
-		SD::MakeReadyFuture<int32>(1),
-		SD::MakeReadyFuture<int32>(2),
-		SD::MakeReadyFuture<int32>(4) })
-                    .Then([this](const TArray<int32>& Result)
+	TArray<UActorComponent*> InitializableComponents = GetComponentsByInterface(UInitializable::StaticClass());
+	TArray<SD::TExpectedFuture<EInitializableState>> InitializableComponentsFutures;
+
+	for (UActorComponent* Element : InitializableComponents)
+	{
+		SD::TExpectedFuture<EInitializableState> CompFuture = SD::Async([&Element]()
+		{
+			IInitializable::Execute_Initialize(Element);
+			return IInitializable::Execute_GetStatus(Element);
+		});
+		InitializableComponentsFutures.Add(CompFuture);
+	}
+	SD::WhenAll<EInitializableState>(InitializableComponentsFutures)
+                    .Then([this](const TArray<EInitializableState>& Result)
                         {
-                            int32 Total = 0;
-                            for (const int32 Value : Result)
-                            {
-                                Total += Value;
-                            }
-                            return Total;
+                          //TODO: 
+                            return EInitializableState::Initialized;
                         });
 }
 
